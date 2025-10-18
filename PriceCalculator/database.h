@@ -1,15 +1,10 @@
-#pragma once
+﻿#pragma once
 #include <sqlite3.h>
 #include <string>
 #include <vector>
+#include "product.h"
 
-struct Product {
-    int id;
-    std::string name;
-    double price;
-    std::string category;
-    std::string subcategory;
-};
+
 
 class Database {
 private:
@@ -19,9 +14,9 @@ public:
     bool Open();
     void Close();
 
-    std::vector<std::string> GetCategories();
-    std::vector<std::string> GetSubcategories(const std::string& category);
-    std::vector<Product> GetProducts(const std::string& category, const std::string& subcategory);
+    std::vector<std::wstring> GetCategories();
+    std::vector<std::wstring> GetSubcategories(const std::wstring& category);
+    std::vector<Product> GetProducts(const std::wstring& category, const std::wstring& subcategory);
 
 private:
     bool ExecuteSQL(const char* sql);

@@ -34,14 +34,13 @@ void UpdateProducts() {
     ComboBox_GetLBText(hCategoryCombo, categoryIndex, category);
     ComboBox_GetLBText(hSubcategoryCombo, subcategoryIndex, subcategory);
 
-    std::string scategory(category, category + wcslen(category));
-    std::string ssubcategory(subcategory, subcategory + wcslen(subcategory));
+    std::wstring wcategory = category;      // УЖЕ wstring
+    std::wstring wsubcategory = subcategory; // УЖЕ wstring
 
-    auto products = GetDatabase().GetProducts(scategory, ssubcategory);
+    auto products = GetDatabase().GetProducts(wcategory, wsubcategory);
     for (const auto& product : products) {
-        std::wstring wname(product.name.begin(), product.name.end());
         std::wstringstream productInfo;
-        productInfo << wname << L" - " << std::fixed << std::setprecision(2) << product.price << L" руб.";
+        productInfo << product.name << L" - " << std::fixed << std::setprecision(2) << product.price << L" руб.";
         ComboBox_AddString(hProductCombo, productInfo.str().c_str());
     }
 
@@ -58,12 +57,11 @@ void UpdateSubcategories() {
 
     wchar_t category[100];
     ComboBox_GetLBText(hCategoryCombo, categoryIndex, category);
-    std::string scategory(category, category + wcslen(category));
+    std::wstring wcategory = category;  // УЖЕ wstring
 
-    auto subcategories = GetDatabase().GetSubcategories(scategory);
+    auto subcategories = GetDatabase().GetSubcategories(wcategory);
     for (const auto& subcategory : subcategories) {
-        std::wstring wsubcategory(subcategory.begin(), subcategory.end());
-        ComboBox_AddString(hSubcategoryCombo, wsubcategory.c_str());
+        ComboBox_AddString(hSubcategoryCombo, subcategory.c_str());
     }
 
     if (ComboBox_GetCount(hSubcategoryCombo) > 0) {
@@ -77,9 +75,7 @@ void FillCategories() {
 
     auto categories = GetDatabase().GetCategories();
     for (const auto& category : categories) {
-        // Преобразуем string в wstring для Windows API
-        std::wstring wcategory(category.begin(), category.end());
-        ComboBox_AddString(hCategoryCombo, wcategory.c_str());
+        ComboBox_AddString(hCategoryCombo, category.c_str());
     }
 
     if (ComboBox_GetCount(hCategoryCombo) > 0) {

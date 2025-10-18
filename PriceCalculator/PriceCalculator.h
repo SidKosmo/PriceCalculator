@@ -1,12 +1,12 @@
-#pragma once
+п»ї#pragma once
 #include <windows.h>
-#include "product.h"  // ДОБАВИТЬ ЭТУ СТРОКУ
+#include "product.h"  // Р”РћР‘РђР’РРўР¬ Р­РўРЈ РЎРўР РћРљРЈ
 
-// Объявления функций
+// РћР±СЉСЏРІР»РµРЅРёСЏ С„СѓРЅРєС†РёР№
 void RegisterWindowClass();
 HWND CreateMainWindow();
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-// Объявление глобальной функции для доступа к базе данных
+// РћР±СЉСЏРІР»РµРЅРёРµ РіР»РѕР±Р°Р»СЊРЅРѕР№ С„СѓРЅРєС†РёРё РґР»СЏ РґРѕСЃС‚СѓРїР° Рє Р±Р°Р·Рµ РґР°РЅРЅС‹С…
 class Database;
 Database& GetDatabase();

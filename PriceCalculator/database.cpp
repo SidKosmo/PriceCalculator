@@ -1,6 +1,7 @@
-#include "database.h"
+п»ї#include "database.h"
 #include <iostream>
 #include <sstream>
+#include <windows.h>
 
 bool Database::Open() {
     int rc = sqlite3_open("products.db", &db);
@@ -8,6 +9,9 @@ bool Database::Open() {
         std::cerr << "Cannot open database: " << sqlite3_errmsg(db) << std::endl;
         return false;
     }
+
+    // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РєРѕРґРёСЂРѕРІРєСѓ UTF-8
+    sqlite3_exec(db, "PRAGMA encoding = 'UTF-8'", nullptr, nullptr, nullptr);
 
     CreateTables();
     InsertSampleData();
@@ -32,15 +36,28 @@ bool Database::ExecuteSQL(const char* sql) {
     return true;
 }
 
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёСЏ UTF-8 РІ std::wstring
+std::wstring UTF8ToWString(const char* utf8) {
+    if (!utf8 || utf8[0] == '\0') return L"";
+
+    int wideLen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, nullptr, 0);
+    if (wideLen == 0) return L"";
+
+    std::wstring wideStr(wideLen - 1, 0);
+    MultiByteToWideChar(CP_UTF8, 0, utf8, -1, &wideStr[0], wideLen);
+
+    return wideStr;
+}
+
 void Database::CreateTables() {
-    // Таблица категорий
+    // РўР°Р±Р»РёС†Р° РєР°С‚РµРіРѕСЂРёР№
     ExecuteSQL(
         "CREATE TABLE IF NOT EXISTS categories ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT, "
         "name TEXT NOT NULL UNIQUE)"
     );
 
-    // Таблица подкатегорий
+    // РўР°Р±Р»РёС†Р° РїРѕРґРєР°С‚РµРіРѕСЂРёР№
     ExecuteSQL(
         "CREATE TABLE IF NOT EXISTS subcategories ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -49,7 +66,7 @@ void Database::CreateTables() {
         "FOREIGN KEY(category_id) REFERENCES categories(id))"
     );
 
-    // Таблица товаров
+    // РўР°Р±Р»РёС†Р° С‚РѕРІР°СЂРѕРІ
     ExecuteSQL(
         "CREATE TABLE IF NOT EXISTS products ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -61,7 +78,7 @@ void Database::CreateTables() {
 }
 
 void Database::InsertSampleData() {
-    // Проверяем есть ли данные
+    // РџСЂРѕРІРµСЂСЏРµРј РµСЃС‚СЊ Р»Рё РґР°РЅРЅС‹Рµ
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM products", -1, &stmt, nullptr) == SQLITE_OK) {
         if (sqlite3_step(stmt) == SQLITE_ROW && sqlite3_column_int(stmt, 0) > 0) {
@@ -71,62 +88,62 @@ void Database::InsertSampleData() {
         sqlite3_finalize(stmt);
     }
 
-    // Вставляем тестовые данные
+    // Р’СЃС‚Р°РІР»СЏРµРј С‚РµСЃС‚РѕРІС‹Рµ РґР°РЅРЅС‹Рµ СЃ СЏРІРЅС‹Рј СѓРєР°Р·Р°РЅРёРµРј UTF-8
     ExecuteSQL("BEGIN TRANSACTION");
 
-    // Категории
-    ExecuteSQL("INSERT OR IGNORE INTO categories (name) VALUES ('Продукты питания')");
-    ExecuteSQL("INSERT OR IGNORE INTO categories (name) VALUES ('Бытовая химия')");
-    ExecuteSQL("INSERT OR IGNORE INTO categories (name) VALUES ('Электроника')");
-    ExecuteSQL("INSERT OR IGNORE INTO categories (name) VALUES ('Одежда')");
+    // РљР°С‚РµРіРѕСЂРёРё
+    ExecuteSQL("INSERT OR IGNORE INTO categories (name) VALUES ('РџСЂРѕРґСѓРєС‚С‹ РїРёС‚Р°РЅРёСЏ')");
+    ExecuteSQL("INSERT OR IGNORE INTO categories (name) VALUES ('Р‘С‹С‚РѕРІР°СЏ С…РёРјРёСЏ')");
+    ExecuteSQL("INSERT OR IGNORE INTO categories (name) VALUES ('Р­Р»РµРєС‚СЂРѕРЅРёРєР°')");
+    ExecuteSQL("INSERT OR IGNORE INTO categories (name) VALUES ('РћРґРµР¶РґР°')");
 
-    // Подкатегории
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (1, 'Хлебобулочные')");
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (1, 'Молочные продукты')");
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (1, 'Фрукты')");
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (1, 'Овощи')");
+    // РџРѕРґРєР°С‚РµРіРѕСЂРёРё
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (1, 'РҐР»РµР±РѕР±СѓР»РѕС‡РЅС‹Рµ')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (1, 'РњРѕР»РѕС‡РЅС‹Рµ РїСЂРѕРґСѓРєС‚С‹')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (1, 'Р¤СЂСѓРєС‚С‹')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (1, 'РћРІРѕС‰Рё')");
 
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (2, 'Стирка')");
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (2, 'Гигиена')");
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (2, 'Уборка')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (2, 'РЎС‚РёСЂРєР°')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (2, 'Р“РёРіРёРµРЅР°')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (2, 'РЈР±РѕСЂРєР°')");
 
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (3, 'Аудио')");
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (3, 'Компьютерная техника')");
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (3, 'Мобильные устройства')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (3, 'РђСѓРґРёРѕ')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (3, 'РљРѕРјРїСЊСЋС‚РµСЂРЅР°СЏ С‚РµС…РЅРёРєР°')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (3, 'РњРѕР±РёР»СЊРЅС‹Рµ СѓСЃС‚СЂРѕР№СЃС‚РІР°')");
 
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (4, 'Мужская')");
-    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (4, 'Женская')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (4, 'РњСѓР¶СЃРєР°СЏ')");
+    ExecuteSQL("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (4, 'Р–РµРЅСЃРєР°СЏ')");
 
-    // Товары
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (1, 'Хлеб белый', 45.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (1, 'Хлеб черный', 55.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (1, 'Булочка сдобная', 35.00)");
+    // РўРѕРІР°СЂС‹
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (1, 'РҐР»РµР± Р±РµР»С‹Р№', 45.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (1, 'РҐР»РµР± С‡РµСЂРЅС‹Р№', 55.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (1, 'Р‘СѓР»РѕС‡РєР° СЃРґРѕР±РЅР°СЏ', 35.00)");
 
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (2, 'Молоко 1л', 85.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (2, 'Сыр российский', 450.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (2, 'Йогурт', 65.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (2, 'Сметана', 120.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (2, 'РњРѕР»РѕРєРѕ 1Р»', 85.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (2, 'РЎС‹СЂ СЂРѕСЃСЃРёР№СЃРєРёР№', 450.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (2, 'Р™РѕРіСѓСЂС‚', 65.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (2, 'РЎРјРµС‚Р°РЅР°', 120.00)");
 
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (3, 'Яблоки', 150.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (3, 'Бананы', 110.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (3, 'Апельсины', 180.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (3, 'РЇР±Р»РѕРєРё', 150.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (3, 'Р‘Р°РЅР°РЅС‹', 110.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (3, 'РђРїРµР»СЊСЃРёРЅС‹', 180.00)");
 
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (4, 'Картофель', 60.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (4, 'Помидоры', 250.00)");
-    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (4, 'Огурцы', 180.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (4, 'РљР°СЂС‚РѕС„РµР»СЊ', 60.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (4, 'РџРѕРјРёРґРѕСЂС‹', 250.00)");
+    ExecuteSQL("INSERT INTO products (subcategory_id, name, price) VALUES (4, 'РћРіСѓСЂС†С‹', 180.00)");
 
     ExecuteSQL("COMMIT");
 }
 
-std::vector<std::string> Database::GetCategories() {
-    std::vector<std::string> categories;
+std::vector<std::wstring> Database::GetCategories() {
+    std::vector<std::wstring> categories;
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(db, "SELECT name FROM categories ORDER BY name", -1, &stmt, nullptr) == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             const unsigned char* name = sqlite3_column_text(stmt, 0);
             if (name) {
-                categories.push_back(reinterpret_cast<const char*>(name));
+                categories.push_back(UTF8ToWString(reinterpret_cast<const char*>(name)));
             }
         }
         sqlite3_finalize(stmt);
@@ -135,8 +152,8 @@ std::vector<std::string> Database::GetCategories() {
     return categories;
 }
 
-std::vector<std::string> Database::GetSubcategories(const std::string& category) {
-    std::vector<std::string> subcategories;
+std::vector<std::wstring> Database::GetSubcategories(const std::wstring& category) {
+    std::vector<std::wstring> subcategories;
     sqlite3_stmt* stmt;
 
     const char* sql = "SELECT s.name FROM subcategories s "
@@ -144,12 +161,20 @@ std::vector<std::string> Database::GetSubcategories(const std::string& category)
         "WHERE c.name = ? ORDER BY s.name";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
-        sqlite3_bind_text(stmt, 1, category.c_str(), -1, SQLITE_STATIC);
+        // РџСЂРµРѕР±СЂР°Р·СѓРµРј wstring РІ UTF-8 РґР»СЏ Р·Р°РїСЂРѕСЃР°
+        std::string categoryUtf8;
+        int categoryLen = WideCharToMultiByte(CP_UTF8, 0, category.c_str(), -1, nullptr, 0, nullptr, nullptr);
+        if (categoryLen > 0) {
+            categoryUtf8.resize(categoryLen - 1);
+            WideCharToMultiByte(CP_UTF8, 0, category.c_str(), -1, &categoryUtf8[0], categoryLen, nullptr, nullptr);
+        }
+
+        sqlite3_bind_text(stmt, 1, categoryUtf8.c_str(), -1, SQLITE_STATIC);
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             const unsigned char* name = sqlite3_column_text(stmt, 0);
             if (name) {
-                subcategories.push_back(reinterpret_cast<const char*>(name));
+                subcategories.push_back(UTF8ToWString(reinterpret_cast<const char*>(name)));
             }
         }
         sqlite3_finalize(stmt);
@@ -158,7 +183,7 @@ std::vector<std::string> Database::GetSubcategories(const std::string& category)
     return subcategories;
 }
 
-std::vector<Product> Database::GetProducts(const std::string& category, const std::string& subcategory) {
+std::vector<Product> Database::GetProducts(const std::wstring& category, const std::wstring& subcategory) {
     std::vector<Product> products;
     sqlite3_stmt* stmt;
 
@@ -168,8 +193,23 @@ std::vector<Product> Database::GetProducts(const std::string& category, const st
         "WHERE c.name = ? AND s.name = ? ORDER BY p.name";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
-        sqlite3_bind_text(stmt, 1, category.c_str(), -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 2, subcategory.c_str(), -1, SQLITE_STATIC);
+        // РџСЂРµРѕР±СЂР°Р·СѓРµРј wstring РІ UTF-8 РґР»СЏ Р·Р°РїСЂРѕСЃР°
+        std::string categoryUtf8, subcategoryUtf8;
+
+        int categoryLen = WideCharToMultiByte(CP_UTF8, 0, category.c_str(), -1, nullptr, 0, nullptr, nullptr);
+        if (categoryLen > 0) {
+            categoryUtf8.resize(categoryLen - 1);
+            WideCharToMultiByte(CP_UTF8, 0, category.c_str(), -1, &categoryUtf8[0], categoryLen, nullptr, nullptr);
+        }
+
+        int subcategoryLen = WideCharToMultiByte(CP_UTF8, 0, subcategory.c_str(), -1, nullptr, 0, nullptr, nullptr);
+        if (subcategoryLen > 0) {
+            subcategoryUtf8.resize(subcategoryLen - 1);
+            WideCharToMultiByte(CP_UTF8, 0, subcategory.c_str(), -1, &subcategoryUtf8[0], subcategoryLen, nullptr, nullptr);
+        }
+
+        sqlite3_bind_text(stmt, 1, categoryUtf8.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, subcategoryUtf8.c_str(), -1, SQLITE_STATIC);
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             Product product;
@@ -177,7 +217,7 @@ std::vector<Product> Database::GetProducts(const std::string& category, const st
 
             const unsigned char* name = sqlite3_column_text(stmt, 1);
             if (name) {
-                product.name = reinterpret_cast<const char*>(name);
+                product.name = UTF8ToWString(reinterpret_cast<const char*>(name));
             }
 
             product.price = sqlite3_column_double(stmt, 2);

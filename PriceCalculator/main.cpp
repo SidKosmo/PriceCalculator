@@ -1,56 +1,56 @@
-#include <windows.h>
+п»ї#include <windows.h>
 #include <commctrl.h>
 #include "PriceCalculator.h"
 #include "database.h"
 
-// Глобальная переменная базы данных
+// Р“Р»РѕР±Р°Р»СЊРЅР°СЏ РїРµСЂРµРјРµРЅРЅР°СЏ Р±Р°Р·С‹ РґР°РЅРЅС‹С… LOL
 Database g_database;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    // Инициализация Common Controls
+    // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Common Controls
     INITCOMMONCONTROLSEX icex;
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC = ICC_STANDARD_CLASSES;
     InitCommonControlsEx(&icex);
 
-    // Инициализация базы данных
+    // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Р±Р°Р·С‹ РґР°РЅРЅС‹С…
     if (!g_database.Open()) {
         MessageBoxW(NULL,
-            L"Не удалось открыть базу данных!",
-            L"Ошибка базы данных",
+            L"РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С…!",
+            L"РћС€РёР±РєР° Р±Р°Р·С‹ РґР°РЅРЅС‹С…",
             MB_ICONERROR | MB_OK);
         return 1;
     }
 
-    // Регистрация класса окна
+    // Р РµРіРёСЃС‚СЂР°С†РёСЏ РєР»Р°СЃСЃР° РѕРєРЅР°
     RegisterWindowClass();
 
-    // Создание главного окна
+    // РЎРѕР·РґР°РЅРёРµ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР°
     HWND hwnd = CreateMainWindow();
     if (!hwnd) {
-        MessageBoxW(NULL, L"Не удалось создать главное окно!", L"Ошибка", MB_ICONERROR);
+        MessageBoxW(NULL, L"РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ РіР»Р°РІРЅРѕРµ РѕРєРЅРѕ!", L"РћС€РёР±РєР°", MB_ICONERROR);
         g_database.Close();
         return 1;
     }
 
-    // Показ окна
+    // РџРѕРєР°Р· РѕРєРЅР°
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 
-    // Цикл сообщений
+    // Р¦РёРєР» СЃРѕРѕР±С‰РµРЅРёР№
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    // Закрытие базы данных при выходе
+    // Р—Р°РєСЂС‹С‚РёРµ Р±Р°Р·С‹ РґР°РЅРЅС‹С… РїСЂРё РІС‹С…РѕРґРµ
     g_database.Close();
 
     return (int)msg.wParam;
 }
 
-// Функция для получения глобальной базы данных
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РіР»РѕР±Р°Р»СЊРЅРѕР№ Р±Р°Р·С‹ РґР°РЅРЅС‹С…
 Database& GetDatabase() {
     return g_database;
 }
